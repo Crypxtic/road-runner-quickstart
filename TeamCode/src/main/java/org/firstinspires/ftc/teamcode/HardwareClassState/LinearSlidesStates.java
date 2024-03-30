@@ -141,8 +141,8 @@ public class LinearSlidesStates {
     }
 
     public void autoLiftSlides(){
-        targetPositionL = 700;
-        targetPositionR = -700;
+        targetPositionL = 900;
+        targetPositionR = -900;
 
         setPIDUp();
 
@@ -159,6 +159,26 @@ public class LinearSlidesStates {
         isLifting = true;
     }
 
+    public void smallLiftSlides(){
+        targetPositionL = 300;
+        targetPositionR = -300;
+
+        setPIDUp();
+
+        ExtensionLeft.setTargetPosition(targetPositionL);
+        ExtensionRight.setTargetPosition(targetPositionR);
+
+
+        ExtensionLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        ExtensionRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        ExtensionLeft.setVelocity(2000);
+        ExtensionRight.setVelocity(-2000);
+
+        isLifting = true;
+    }
+
+
     public boolean checkMode(){
         if (Math.abs(ExtensionLeft.getTargetPosition()-ExtensionLeft.getCurrentPosition()) < 10){
             ExtensionLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -173,6 +193,7 @@ public class LinearSlidesStates {
         }
         return false;
     }
+
 
     public boolean increaseLevel(){
         if (leftPreset < 1800){

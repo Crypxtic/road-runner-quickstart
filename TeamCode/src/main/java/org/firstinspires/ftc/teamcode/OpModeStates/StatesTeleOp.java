@@ -50,12 +50,14 @@ public class StatesTeleOp extends OpMode {
     int myAprilTagIdCode;
 
     boolean intakeFlipInit = true;
+    boolean faceUpFlipInit = true;
     boolean ClawLeftInit = true;
     boolean ClawRightInit = true;
     boolean intakeArmDown = true;
     boolean shooterInit = true;
 
     boolean buzzable = true;
+    boolean buzzableDrop = false;
 
     public static double backMulti = 0.8;
 
@@ -66,10 +68,6 @@ public class StatesTeleOp extends OpMode {
 
     public DistanceSensor distanceSensor;
 
-    double camToCenter = 7.125;
-    double distanceFromTag = 7;
-
-    public boolean BackForthMode = false;
     public static double DEAD_ZONE_AMOUNT = 0.05;
 
     IMU imu;
@@ -77,23 +75,17 @@ public class StatesTeleOp extends OpMode {
     double botHeading;
     double setX;
     double setY;
-    double offset = 0;
 
     double chassis_multi = 1;
 
-    double armPosLeft = intake.getLeftLifted();
-    double armPosRight = intake.getRightLifted();
+    double armPosLeft = intake.getLeftStackCycle();
+    double armPosRight = intake.getRightStackCycle();
 
     double clawPos = intake.getFlipUp();
 
-    double yaw = 0;
-    double range = 0;
-    double bearing = 0;
-
 
     boolean moveArm = false;
-
-    boolean moveArm2 = false;
+    boolean moveDown = false;
 
     boolean moveArmBack = false;
 
@@ -102,6 +94,7 @@ public class StatesTeleOp extends OpMode {
     ElapsedTime armTimer = new ElapsedTime();
 
     ElapsedTime extraTime = new ElapsedTime();
+    ElapsedTime slideTimer = new ElapsedTime();
 
     double prevPositionLeft = 0;
 
@@ -157,6 +150,7 @@ public class StatesTeleOp extends OpMode {
 
         backLeftMotor.setDirection(DcMotor.Direction.REVERSE);
         frontLeftMotor.setDirection(DcMotor.Direction.REVERSE);
+        backRightMotor.setDirection(DcMotor.Direction.REVERSE);
 
         intake.init(hardwareMap);
         shooter.init(hardwareMap);
@@ -177,26 +171,38 @@ public class StatesTeleOp extends OpMode {
     @Override
     public void loop() {
         if(currentGamepad2.b && !previousGamepad2.b){
-            if(intakeFlipInit){
-                clawPos = intake.getFlipDown();
+            if (armFaceUp){
+                if(faceUpFlipInit){
+                    clawPos = intake.getFlipFaceUpSingle();
+                }
+                else{
+                    clawPos = intake.getFlipFaceUp();
+                }
+                faceUpFlipInit = !faceUpFlipInit;
             }
-            else{
-                clawPos = intake.getFlipUp();
+            else {
+                if (intakeFlipInit) {
+                    clawPos = intake.getFlipDown();
+                } else {
+                    clawPos = intake.getFlipUp();
+                }
+                intakeFlipInit = !intakeFlipInit;
             }
-            intakeFlipInit = !intakeFlipInit;
         }
-        if((currentGamepad1.right_trigger > 0.5 && !(previousGamepad1.right_trigger > 0.5))){
+        if((currentGamepad1.right_trigger > 0.3 && !(previousGamepad1.right_trigger > 0.3))){
             if(ClawLeftInit){
-                intake.openClawLeft();
+                if (armFaceUp) intake.openWideClawL();
+                else intake.openClawLeft();
             }
             else{
                 intake.closeClawLeft();
             }
             ClawLeftInit = !ClawLeftInit;
         }
-        if((currentGamepad1.left_trigger > 0.5 && !(previousGamepad1.left_trigger > 0.5))){
+        if((currentGamepad1.left_trigger > 0.3 && !(previousGamepad1.left_trigger > 0.3))){
             if(ClawRightInit){
-                intake.openClawRight();
+                if (armFaceUp) intake.openWideClawR();
+                else intake.openClawRight();
             }
             else{
                 intake.closeClawRight();
@@ -211,43 +217,53 @@ public class StatesTeleOp extends OpMode {
             intake.setUpServoProfile(armPosLeft, armPosRight);
             clawPos = intake.getFlipUp();
             armUp = true;
+            buzzableDrop = true;
             moveArmBack = true;
             armTimer.reset();
         }
         if (currentGamepad2.x && !previousGamepad2.x){
 //            checkDistance(true);
-            slides.resetSlides();
+            if (armUp && slides.ExtensionLeft.getCurrentPosition() < 1700){
+                slides.resetLiftEncoder();
+                slides.moveSlides(0.5);
+            }
+            moveDown = true;
             intakeFlipInit = true;
-            intake.setUpServoProfileDown(armPosLeft, armPosRight);
-            clawPos = intake.getFlipUp();
-            moveArmBack = true;
+            buzzableDrop = false;
+            if (!armFaceUp)
+                clawPos = intake.getFlipUp();
             armUp = false;
-            armTimer.reset();
+            armFaceUp = false;
+            slideTimer.reset();
         }
         if (currentGamepad2.y && !previousGamepad2.y && !armUp){
 //            checkDistance(false);
             intake.setUpServoProfileFaceUp(armPosLeft, armPosRight);
             armUp = true;
+            buzzableDrop = true;
             moveArm = true;
             moveArmBack = true;
+            armFaceUp = true;
+            faceUpFlipInit = true;
             armTimer.reset();
         }
         if (currentGamepad2.dpad_down && !previousGamepad2.dpad_down){
             intakeFlipInit = true;
-            armPosLeft = intake.getLeftLifted();
-            armPosRight = intake.getRightLifted();
+            armPosLeft = intake.getLeftStackCycle();
+            armPosRight = intake.getRightStackCycle();
             clawPos = intake.getFlipUp();
         }
-        if(currentGamepad2.right_bumper && !previousGamepad2.right_bumper){
+        if(currentGamepad1.b && !previousGamepad1.b){
             shooter.shooterOut();
         }
         if(currentGamepad2.left_bumper && !previousGamepad2.left_bumper){
             armPosLeft = intake.getLeftDown();
             armPosRight = intake.getRightDown();
-            intake.openWideClawL();
-            intake.openWideClawR();
+            clawPos = intake.getFlipDown();
+            armTimer.reset();
             ClawLeftInit = false;
             ClawRightInit = false;
+            intakeFlipInit = false;
             buzzable = true;
         }
         if (currentGamepad2.dpad_up && !previousGamepad2.dpad_up){
@@ -255,6 +271,7 @@ public class StatesTeleOp extends OpMode {
 
             slides.ExtensionRight.setPower(0);
             slides.ExtensionLeft.setPower(0);
+            moveDown = false;
         }
 //        if (currentGamepad2.x && !previousGamepad2.x){
 //            if (slides.maxPower == 1){
@@ -288,6 +305,7 @@ public class StatesTeleOp extends OpMode {
         double x = gamepad1.left_stick_x;
         double rx = gamepad1.right_stick_x;
 
+
         if (currentGamepad2.dpad_left && !previousGamepad2.dpad_left){
             boolean isSuccessful = slides.decreaseLevel();
             if (isSuccessful){
@@ -298,13 +316,24 @@ public class StatesTeleOp extends OpMode {
         if (currentGamepad2.dpad_right && !previousGamepad2.dpad_right){
             boolean isSuccessful = slides.increaseLevel();
             if (isSuccessful){
-                gamepad2.rumbleBlips((slides.leftPreset-300)/300+1);
+                gamepad2.rumbleBlips((slides.leftPreset - 300) / 300 + 1);
             }
         }
 
         if (buzzable && ClawLeftInit && ClawRightInit){
             gamepad2.rumble(1000);
             buzzable = false;
+        }
+
+        if (buzzable && armTimer.seconds() > 0.4){
+            intake.openWideClawL();
+            intake.openWideClawR();
+            buzzable = false;
+        }
+
+        if (buzzableDrop && !ClawLeftInit && !ClawRightInit){
+            gamepad2.rumbleBlips(2);
+            buzzableDrop = false;
         }
 //
         findBotHeading();
@@ -313,14 +342,35 @@ public class StatesTeleOp extends OpMode {
         triggersTurnServo();
         dpadClawWrist();
 
-        if(!slides.isLifting)
-            slides.moveSlides(-gamepad2.right_stick_y);
-        hanger.hangerMotorLeft.setPower(-gamepad2.left_stick_y);
-        hanger.hangerMotorRight.setPower(-gamepad2.left_stick_y);
+        if(!slides.isLifting && !moveDown) {
+            double power = -gamepad2.right_stick_y;
+            if (slides.ExtensionLeft.getCurrentPosition() > 2100 && power > 0)
+                power = 0;
+            slides.moveSlides(power);
+        }
+            hanger.hangerMotorLeft.setPower(-gamepad2.left_stick_y);
+            hanger.hangerMotorRight.setPower(-gamepad2.left_stick_y);
 
         if (moveArm && armTimer.seconds() > 0.3){
             clawPos = intake.getFlipFaceUp();
             moveArm = false;
+        }
+
+
+        if (moveDown && slideTimer.seconds() > 0.1){
+            if (!moveArmBack){
+                armTimer.reset();
+                intake.setUpServoProfileDown(armPosLeft, armPosRight);
+                moveArmBack = true;
+            }
+            if (slideTimer.seconds() > 0.4){
+                clawPos = intake.getFlipUp();
+                slides.moveSlides(-1);
+                if (slides.ExtensionLeft.getCurrent(CurrentUnit.AMPS) > 3.5 && slideTimer.seconds() > 1.5){
+                    slides.moveSlides(0);
+                    moveDown = false;
+                }
+            }
         }
 //
         if (moveArmBack){
@@ -361,6 +411,11 @@ public class StatesTeleOp extends OpMode {
         if (Math.abs(rx) < DEAD_ZONE_AMOUNT){ //rx deadzone
             rx = 0;
         }
+
+        if (slides.ExtensionLeft.getCurrentPosition() > 2100){
+            slides.moveSlides(0);
+        }
+
 
         //april tag
 //        myAprilTagDetections = aprilTag.getDetections();
@@ -426,15 +481,14 @@ public class StatesTeleOp extends OpMode {
         telemetry.addData("Left Servo Pos", intake.IntakeLeftFlip.getPosition());
         telemetry.addData("Right Servo Pos", intake.IntakeRightFlip.getPosition());
         telemetry.addData("Claw Servo Pos", intake.IntakeWrist.getPosition());
-        telemetry.addData("LR Wheel Draw", backLeftMotor.getCurrent(CurrentUnit.AMPS));
-        telemetry.addData("RR Wheel Draw", backRightMotor.getCurrent(CurrentUnit.AMPS));
-        telemetry.addData("LF Wheel Draw", frontLeftMotor.getCurrent(CurrentUnit.AMPS));
-        telemetry.addData("RF Wheel Draw", frontRightMotor.getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("HangLeft Draw", hanger.hangerMotorLeft.getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("HangRight Draw", hanger.hangerMotorRight.getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("HangLeft Ticks", hanger.hangerMotorLeft.getCurrentPosition());
+        telemetry.addData("HangRight Ticks", hanger.hangerMotorLeft.getCurrentPosition());
         telemetry.update();
     }
 
     public void findBotHeading(){
-        extraTime.reset();
         YawPitchRollAngles robotOrientation = imu.getRobotYawPitchRollAngles();
 
 // Now use these simple methods to extract each angle
@@ -448,7 +502,6 @@ public class StatesTeleOp extends OpMode {
         if (Math.toDegrees(botHeading) >= 180){
             botHeading = Math.toRadians((Math.toDegrees(botHeading) - 180)-180);
         }
-        telemetry.addData("imu time", extraTime.seconds());
     }
 
     public void RBReset(){
@@ -469,7 +522,6 @@ public class StatesTeleOp extends OpMode {
     }
 
     public void dpadClawWrist(){
-        extraTime.reset();
         double multi = 0;
 
 //        if (gamepad2.dpad_left) multi = -1;
@@ -486,15 +538,17 @@ public class StatesTeleOp extends OpMode {
         }
 
         intake.IntakeWrist.setPosition(clawPos);
-        telemetry.addData("Claw time", extraTime.seconds());
     }
 
     public void triggersTurnServo(){
-        extraTime.reset();
-        armPosRight -= gamepad2.right_trigger/200;
-        armPosRight += gamepad2.left_trigger/200;
-        armPosLeft += gamepad2.right_trigger/200;
-        armPosLeft -= gamepad2.left_trigger/200;
+        if (currentGamepad2.right_trigger > 0.3 && !(previousGamepad2.right_trigger > 0.3)) {
+            armPosLeft += 0.012;
+            armPosRight -= 0.01176;
+        }
+        if (currentGamepad2.left_trigger > 0.3 && !(previousGamepad2.left_trigger > 0.3)) {
+            armPosLeft -= 0.012;
+            armPosRight += 0.01176;
+        }
 
         if (armPosLeft >= 1){
             armPosLeft = 1;
@@ -512,7 +566,6 @@ public class StatesTeleOp extends OpMode {
 
         intake.IntakeLeftFlip.setPosition(armPosLeft);
         intake.IntakeRightFlip.setPosition(armPosRight);
-        telemetry.addData("intake time", extraTime.seconds());
 
 
     }

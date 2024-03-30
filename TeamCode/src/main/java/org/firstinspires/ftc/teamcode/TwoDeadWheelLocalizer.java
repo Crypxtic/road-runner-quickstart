@@ -25,8 +25,8 @@ import org.firstinspires.ftc.teamcode.messages.TwoDeadWheelInputsMessage;
 @Config
 public final class TwoDeadWheelLocalizer implements Localizer {
     public static class Params {
-        public double parYTicks = 0.0; // y position of the parallel encoder (in tick units)
-        public double perpXTicks = 0.0; // x position of the perpendicular encoder (in tick units)
+        public double parYTicks =  -2239.800301359958; // y position of the parallel encoder (in tick units)
+        public double perpXTicks = -2088.8971179448095; // x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();
@@ -50,7 +50,8 @@ public final class TwoDeadWheelLocalizer implements Localizer {
         perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "rightRear")));
 
         // TODO: reverse encoder directions if needed
-        par.setDirection(DcMotorSimple.Direction.REVERSE);
+//        par.setDirection(DcMotorSimple.Direction.REVERSE);
+        perp.setDirection(DcMotorSimple.Direction.REVERSE);
 
         this.imu = imu;
 
@@ -68,7 +69,7 @@ public final class TwoDeadWheelLocalizer implements Localizer {
 
         FlightRecorder.write("TWO_DEAD_WHEEL_INPUTS", new TwoDeadWheelInputsMessage(parPosVel, perpPosVel, angles, angularVelocity));
 
-        Rotation2d heading = Rotation2d.exp(-angles.getYaw(AngleUnit.RADIANS));
+        Rotation2d heading = Rotation2d.exp(angles.getYaw(AngleUnit.RADIANS));
 
         // see https://github.com/FIRST-Tech-Challenge/FtcRobotController/issues/617
         double rawHeadingVel = angularVelocity.zRotationRate;

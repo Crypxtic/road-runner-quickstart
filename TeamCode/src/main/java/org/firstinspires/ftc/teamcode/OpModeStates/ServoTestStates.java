@@ -14,7 +14,7 @@ import org.firstinspires.ftc.teamcode.HardwareClassState.IntakeStates;
 
 @Config
 @TeleOp
-public class StatesServoTest extends OpMode {
+public class ServoTestStates extends OpMode {
 
     Gamepad previousGamepad1 = new Gamepad();
     Gamepad currentGamepad1 = new Gamepad();
@@ -40,8 +40,8 @@ public class StatesServoTest extends OpMode {
     public static double close1 = 1;
     public static double close2 = 1;
 
-    double armPosLeft = 0.169;
-    double armPosRight = 0.89076;
+    double armPosLeft = 0.324;
+    double armPosRight = 0.665;
 
     double clawPos = 0.358;
 
@@ -65,6 +65,8 @@ public class StatesServoTest extends OpMode {
         telemetry.addData("Claw pos", clawPos);
         telemetry.addData("Left pos", armPosLeft);
         telemetry.addData("Right pos", armPosRight);
+        telemetry.addData("Left range", intake.IntakeLeftFlip.getPwmRange().usPulseLower + " " + intake.IntakeLeftFlip.getPwmRange().usPulseUpper);
+        telemetry.addData("Right range", intake.IntakeRightFlip.getPwmRange().usPulseLower + " " + intake.IntakeRightFlip.getPwmRange().usPulseUpper);
         telemetry.update();
     }
 
@@ -107,8 +109,8 @@ public class StatesServoTest extends OpMode {
             armPosRight = 0;
         }
 
-        intake.IntakeLeftFlip.setPosition(armPosLeft);
-        intake.IntakeRightFlip.setPosition(armPosRight);
+        if (!gamepad2.right_bumper) intake.IntakeLeftFlip.setPosition(armPosLeft);
+        if (!gamepad2.left_bumper) intake.IntakeRightFlip.setPosition(armPosRight);
 
     }
 }

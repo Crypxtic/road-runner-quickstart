@@ -1,69 +1,74 @@
 package org.firstinspires.ftc.teamcode.HardwareClassState;
 
 import com.acmerobotics.dashboard.config.Config;
-
 import com.arcrobotics.ftclib.trajectory.TrapezoidProfile;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 @Config
 public class IntakeStates {
     public Servo ClawRight;
     public Servo IntakeWrist;
-    public Servo IntakeLeftFlip;
-    public Servo IntakeRightFlip;
+    public ServoImplEx IntakeLeftFlip;
+    public ServoImplEx IntakeRightFlip;
     public Servo PurpleStick;
     public Servo ClawLeft;
 
     public TrapezoidProfile.Constraints constraints =
-            new TrapezoidProfile.Constraints(1, 1.15);
+            new TrapezoidProfile.Constraints(0.9, 1);
 
-    public static double CLAW_OPEN_R = 0.65;
-    public static double CLAW_CLOSE_R = 0.5;
+    public static double CLAW_OPEN_R = 0.67;
+    public static double CLAW_CLOSE_R = 0.49;
 
-    public static double CLAW_OPEN_L = 0.25;
-    public static double CLAW_CLOSE_L = 0.5;
+    public static double CLAW_OPEN_L = 0.2;
+    public static double CLAW_CLOSE_L = 0.4;
 
-    public static double CLAW_WIDE_OPEN_L = 0.15;
+    public static double CLAW_WIDE_OPEN_L = 0.12;
     public static double CLAW_WIDE_OPEN_R = 0.77;
 
-    public static double FLIP_DOWN = 0.386;
+    public static double FLIP_DOWN = 0.349;
     public static double FLIP_UP = 0.6;
 
-    public static double FLIP_FACE_UP = 0.124;
-    public static double FLIP_FACE_UP_2 = 0.91;
+    public static double FLIP_FACE_UP = 0.098;
 
-    public static double FLIP_STACK = 0.358;
+    public static double FLIP_FACE_UP_SINGLE = 0.188;
 
-    public static double LEFT_UP = 0.824; //0.778
-    public static double LEFT_DOWN = 0.138;
-    public static double RIGHT_UP = 0.236; //0.222
-    public static double RIGHT_DOWN = 0.922;
+    public static double FLIP_STACK = 0.34;//358
+
+    public static double LEFT_UP = 0.968; //0.778
+    public static double LEFT_DOWN = 0.291;
+    public static double RIGHT_UP = 0.021; //0.222
+    public static double RIGHT_DOWN = 0.698;
 
     //claw: 0.4
     //left arm: 0.076
     //right arm: 0.977
 
-    public static double LEFT_LIFTED = 0.23;
-    public static double RIGHT_LIFTED = 0.83;
+    public static double LEFT_LIFTED = 0.382;
+    public static double RIGHT_LIFTED = 0.607;
 
-    public static double LEFT_FACE_UP = 0.8;
-    public static double RIGHT_FACE_UP = 0.26;
-
-    public static double LEFT_FACE_UP_2 = 0.8;
-    public static double RIGHT_FACE_UP_2 = 0.26;
+    public static double LEFT_FACE_UP = 0.933;
+    public static double RIGHT_FACE_UP = 0.056;
 
 
-    public static double LEFT_STACK = 0.169;
-    public static double RIGHT_STACK = 0.89076;
+
+    public static double LEFT_STACK = 0.327;
+    public static double RIGHT_STACK = 0.662;
 
     //2nd cycle
     //claw: 0.366
     //Left: 0.15
     //Right: 0.91
 
-    public static double LEFT_STACK_1 = 0.181;
-    public static double RIGHT_STACK_1 = 0.879;
+    public static double LEFT_STACK_1 = 0.335;
+    public static double RIGHT_STACK_1 = 0.654;
+
+    public static double LEFT_STACK_CYCLE = 0.319;
+    public static double RIGHT_STACK_CYCLE = 0.68;
+
+    public static double LEFT_STACK_CYCLE_1 = 0.324;
+    public static double RIGHT_STACK_CYCLE_1 = 0.675;
 
     public static double LEFT_HALF = 0.68;
     public static double RIGHT_HALF = 0.32;
@@ -81,8 +86,8 @@ public class IntakeStates {
         ClawLeft = hardwareMap.servo.get("ClawLeft");
         ClawRight = hardwareMap.servo.get("ClawRight");
         IntakeWrist = hardwareMap.servo.get("IntakeWrist");
-        IntakeLeftFlip = hardwareMap.servo.get("LeftFlip");
-        IntakeRightFlip = hardwareMap.servo.get("RightFlip");
+        IntakeLeftFlip = hardwareMap.get(ServoImplEx.class, "LeftFlip");
+        IntakeRightFlip = hardwareMap.get(ServoImplEx.class,"RightFlip");
     }
 
     public void openClawLeft(){ClawLeft.setPosition(CLAW_OPEN_L);}
@@ -113,6 +118,8 @@ public class IntakeStates {
         IntakeRightFlip.setPosition(RIGHT_DOWN);
         IntakeLeftFlip.setPosition(LEFT_DOWN);
     }
+
+    public double getFlipFaceUpSingle() {return FLIP_FACE_UP_SINGLE;}
 
     public double getRightDown(){
         return RIGHT_DOWN;
@@ -174,8 +181,8 @@ public class IntakeStates {
     }
 
     public void armFaceUp2(){
-        IntakeRightFlip.setPosition(RIGHT_FACE_UP_2);
-        IntakeLeftFlip.setPosition(LEFT_FACE_UP_2);
+        IntakeRightFlip.setPosition(RIGHT_FACE_UP);
+        IntakeLeftFlip.setPosition(LEFT_FACE_UP);
     }
 
     public double getFlipFaceUp(){
@@ -190,6 +197,10 @@ public class IntakeStates {
         return RIGHT_FACE_UP;
     }
 
+    public double getRightStackCycle() {return RIGHT_STACK_CYCLE;}
+
+    public double getLeftStackCycle() {return LEFT_STACK_CYCLE;}
+
     public void openWideClawR(){ ClawRight.setPosition(CLAW_WIDE_OPEN_R);}
 
     public void openWideClawL(){ ClawLeft.setPosition(CLAW_WIDE_OPEN_L);}
@@ -202,6 +213,16 @@ public class IntakeStates {
     public void armToStack1(){
         IntakeLeftFlip.setPosition(LEFT_STACK_1);
         IntakeRightFlip.setPosition(RIGHT_STACK_1);
+    }
+
+    public void armToCycle(){
+        IntakeLeftFlip.setPosition(LEFT_STACK_CYCLE);
+        IntakeRightFlip.setPosition(RIGHT_STACK_CYCLE);
+    }
+
+    public void armToCycle1(){
+        IntakeLeftFlip.setPosition(LEFT_STACK_CYCLE_1);
+        IntakeRightFlip.setPosition(RIGHT_STACK_CYCLE_1);
     }
 
     public void armHalfway(){
@@ -222,7 +243,7 @@ public class IntakeStates {
     }
 
     public void flipFace2(){
-            IntakeWrist.setPosition(FLIP_FACE_UP_2);
+            IntakeWrist.setPosition(FLIP_STACK);
     }
 
     public void setUpServoProfile(double currentPosL, double currentPosR){

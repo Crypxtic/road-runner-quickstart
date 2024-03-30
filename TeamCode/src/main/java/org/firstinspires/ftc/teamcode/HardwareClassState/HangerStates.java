@@ -1,15 +1,16 @@
 package org.firstinspires.ftc.teamcode.HardwareClassState;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 public class HangerStates {
-    public DcMotor hangerMotorLeft;
-    public DcMotor hangerMotorRight;
+    public DcMotorEx hangerMotorLeft;
+    public DcMotorEx hangerMotorRight;
 
     public void init(HardwareMap hardwareMap) {
-        hangerMotorLeft = hardwareMap.get(DcMotor.class, "HangerLeft");
-        hangerMotorRight = hardwareMap.get(DcMotor.class, "HangerRight");
+        hangerMotorLeft = hardwareMap.get(DcMotorEx.class, "HangerLeft");
+        hangerMotorRight = hardwareMap.get(DcMotorEx.class, "HangerRight");
 
         hangerMotorLeft.setPower(0);
         hangerMotorLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
