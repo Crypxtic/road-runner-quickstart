@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.HardwareClassState;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -30,8 +31,15 @@ public class LinearSlidesStates {
     public static double KdDown = 5;
     public static double KfDown = 10;
 
+    public static double LibKp = 0.01;
+    public static double LibKi = 0;
+    public static double LibKd = 0;
+    public static double LibKf = 0;
+
     PIDFCoefficients PID = new PIDFCoefficients(Kp, Ki, Kd, Kf);
     PIDFCoefficients PIDDown = new PIDFCoefficients(KpDown, KiDown, KdDown, KfDown);
+
+    PIDFController slidesPID = new PIDFController(LibKp, LibKi, LibKd, LibKf);
 
     public int targetPositionL = 0;
     public int targetPositionR = 0;
@@ -42,6 +50,8 @@ public class LinearSlidesStates {
     public boolean goingDown = false;
 
     public boolean isLifting = false;
+    public int FAR_LEFT = 900;
+    public int FAR_RIGHT = -900;
 
     public ElapsedTime timer = new ElapsedTime();
 
@@ -141,8 +151,8 @@ public class LinearSlidesStates {
     }
 
     public void autoLiftSlides(){
-        targetPositionL = 900;
-        targetPositionR = -900;
+        targetPositionL = FAR_LEFT;
+        targetPositionR = FAR_RIGHT;
 
         setPIDUp();
 

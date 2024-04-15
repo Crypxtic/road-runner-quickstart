@@ -40,8 +40,8 @@ public class ServoTestStates extends OpMode {
     public static double close1 = 1;
     public static double close2 = 1;
 
-    double armPosLeft = 0.324;
-    double armPosRight = 0.665;
+    double armPosLeft = 0.5;
+    double armPosRight = 0.5;
 
     double clawPos = 0.358;
 

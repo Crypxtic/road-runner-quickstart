@@ -27,14 +27,14 @@ public class IntakeStates {
     public static double CLAW_WIDE_OPEN_L = 0.12;
     public static double CLAW_WIDE_OPEN_R = 0.77;
 
-    public static double FLIP_DOWN = 0.349;
-    public static double FLIP_UP = 0.6;
+    public static double FLIP_DOWN = 0.528;
+    public static double FLIP_UP = 0.5625;
 
-    public static double FLIP_FACE_UP = 0.098;
+    public static double FLIP_FACE_UP = 0.4975;
 
-    public static double FLIP_FACE_UP_SINGLE = 0.188;
+    public static double FLIP_FACE_UP_SINGLE = 0.502;
 
-    public static double FLIP_STACK = 0.34;//358
+    public static double FLIP_STACK = 0.526;//358
 
     public static double LEFT_UP = 0.968; //0.778
     public static double LEFT_DOWN = 0.291;
@@ -53,22 +53,22 @@ public class IntakeStates {
 
 
 
-    public static double LEFT_STACK = 0.327;
-    public static double RIGHT_STACK = 0.662;
+    public static double LEFT_STACK = 0.318;
+    public static double RIGHT_STACK = 0.671;
 
     //2nd cycle
     //claw: 0.366
     //Left: 0.15
     //Right: 0.91
 
-    public static double LEFT_STACK_1 = 0.335;
-    public static double RIGHT_STACK_1 = 0.654;
+    public static double LEFT_STACK_1 = 0.328;
+    public static double RIGHT_STACK_1 = 0.661;
 
-    public static double LEFT_STACK_CYCLE = 0.319;
-    public static double RIGHT_STACK_CYCLE = 0.68;
+    public static double LEFT_STACK_CYCLE = 0.298;
+    public static double RIGHT_STACK_CYCLE = 0.681;
 
-    public static double LEFT_STACK_CYCLE_1 = 0.324;
-    public static double RIGHT_STACK_CYCLE_1 = 0.675;
+    public static double LEFT_STACK_CYCLE_1 = 0.305;
+    public static double RIGHT_STACK_CYCLE_1 = 0.674;
 
     public static double LEFT_HALF = 0.68;
     public static double RIGHT_HALF = 0.32;
@@ -201,6 +201,15 @@ public class IntakeStates {
 
     public double getLeftStackCycle() {return LEFT_STACK_CYCLE;}
 
+    public double getRightStackCycle1() {return RIGHT_STACK_CYCLE_1;}
+
+    public double getLeftStackCycle1() {return LEFT_STACK_CYCLE_1;}
+
+    public double getRightStack1() {return RIGHT_STACK_1;}
+
+    public double getLeftStack1() {return LEFT_STACK_1;}
+
+
     public void openWideClawR(){ ClawRight.setPosition(CLAW_WIDE_OPEN_R);}
 
     public void openWideClawL(){ ClawLeft.setPosition(CLAW_WIDE_OPEN_L);}
@@ -287,6 +296,22 @@ public class IntakeStates {
 
         armProfileR =
                 new TrapezoidProfile(constraints, new TrapezoidProfile.State(RIGHT_FACE_UP, 0),
+                        new TrapezoidProfile.State(currentPosR, 0)
+                );
+
+
+        armStateL = armProfileL.calculate(0);
+        armStateR = armProfileR.calculate(0);
+    }
+
+    public void setUpServoProfileCustom(double currentPosL, double currentPosR, double targetL, double targetR){
+        armProfileL =
+                new TrapezoidProfile(constraints, new TrapezoidProfile.State(targetL, 0),
+                        new TrapezoidProfile.State(currentPosL, 0)
+                );
+
+        armProfileR =
+                new TrapezoidProfile(constraints, new TrapezoidProfile.State(targetR, 0),
                         new TrapezoidProfile.State(currentPosR, 0)
                 );
 

@@ -8,8 +8,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class ShooterStates {
     public Servo shooter;
 
-    public static double SHOOTER_INIT = 0;
-    public static double SHOOTER_OUT = 0.65;
+    public static double SHOOTER_INIT = 1;
+    public static double SHOOTER_OUT = 0.5;
 
     public void init(HardwareMap hardwareMap) {
         shooter = hardwareMap.servo.get("shooter");

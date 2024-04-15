@@ -1,15 +1,25 @@
 package org.firstinspires.ftc.teamcode.OpModeStates;
 
+import android.graphics.Color;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Action;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareDevice;
+import com.qualcomm.robotcore.hardware.I2cAddr;
+import com.qualcomm.robotcore.hardware.I2cAddressableDevice;
+import com.qualcomm.robotcore.hardware.I2cDeviceSynchDevice;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -18,6 +28,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.HardwareClassState.ActionAuto;
 import org.firstinspires.ftc.teamcode.HardwareClassState.HangerStates;
 import org.firstinspires.ftc.teamcode.HardwareClassState.IntakeStates;
 import org.firstinspires.ftc.teamcode.HardwareClassState.LinearSlidesStates;
@@ -26,6 +37,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @TeleOp
@@ -55,11 +67,12 @@ public class StatesTeleOp extends OpMode {
     boolean ClawRightInit = true;
     boolean intakeArmDown = true;
     boolean shooterInit = true;
+    boolean disableAutoGrab = false;
 
     boolean buzzable = true;
     boolean buzzableDrop = false;
 
-    public static double backMulti = 0.8;
+    public static double backMulti = 1;
 
     public DcMotorEx backLeftMotor;
     public DcMotorEx backRightMotor;
@@ -76,10 +89,15 @@ public class StatesTeleOp extends OpMode {
     double setX;
     double setY;
 
+    boolean startDelay = false;
+
     double chassis_multi = 1;
 
     double armPosLeft = intake.getLeftStackCycle();
     double armPosRight = intake.getRightStackCycle();
+    ActionAuto autoActions = new ActionAuto();
+    public FtcDashboard dash = FtcDashboard.getInstance();
+    public List<Action> runningActions = new ArrayList<>();
 
     double clawPos = intake.getFlipUp();
 
@@ -88,6 +106,7 @@ public class StatesTeleOp extends OpMode {
     boolean moveDown = false;
 
     boolean moveArmBack = false;
+    boolean clawDown = false;
 
     boolean armUp = false;
     boolean armFaceUp = false;
@@ -95,6 +114,8 @@ public class StatesTeleOp extends OpMode {
 
     ElapsedTime extraTime = new ElapsedTime();
     ElapsedTime slideTimer = new ElapsedTime();
+    DistanceSensor leftClawDist;
+    DistanceSensor rightClawDist;
 
     double prevPositionLeft = 0;
 
@@ -131,6 +152,9 @@ public class StatesTeleOp extends OpMode {
         frontLeftMotor = hardwareMap.get(DcMotorEx.class, "leftFront");
         frontRightMotor = hardwareMap.get(DcMotorEx.class, "rightFront");
 
+        leftClawDist = hardwareMap.get(DistanceSensor.class, "sensorLeft");
+        rightClawDist = hardwareMap.get(DistanceSensor.class, "sensorRight");
+
 //        distanceSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
 
         backLeftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -166,10 +190,14 @@ public class StatesTeleOp extends OpMode {
 //        intake.armOffGround();
 //        intake.flipPurpleUp();
 
+        autoActions.init(intake, slides, armTimer, slideTimer);
+
     }
 
     @Override
     public void loop() {
+        TelemetryPacket packet = new TelemetryPacket();
+
         if(currentGamepad2.b && !previousGamepad2.b){
             if (armFaceUp){
                 if(faceUpFlipInit){
@@ -190,7 +218,7 @@ public class StatesTeleOp extends OpMode {
             }
         }
         if((currentGamepad1.right_trigger > 0.3 && !(previousGamepad1.right_trigger > 0.3))){
-            if(ClawLeftInit){
+            if(ClawLeftInit && !(buzzable && !disableAutoGrab) && !startDelay){
                 if (armFaceUp) intake.openWideClawL();
                 else intake.openClawLeft();
             }
@@ -200,7 +228,7 @@ public class StatesTeleOp extends OpMode {
             ClawLeftInit = !ClawLeftInit;
         }
         if((currentGamepad1.left_trigger > 0.3 && !(previousGamepad1.left_trigger > 0.3))){
-            if(ClawRightInit){
+            if(ClawRightInit && !(buzzable && !disableAutoGrab) && !startDelay){
                 if (armFaceUp) intake.openWideClawR();
                 else intake.openClawRight();
             }
@@ -212,7 +240,7 @@ public class StatesTeleOp extends OpMode {
         if(currentGamepad2.a && !previousGamepad2.a && !armUp){
 //            checkDistance(false);
             slides.resetLiftEncoder();
-            slides.liftSlides();
+        runningActions.add(autoActions.liftSlides());
             intakeFlipInit = true;
             intake.setUpServoProfile(armPosLeft, armPosRight);
             clawPos = intake.getFlipUp();
@@ -252,6 +280,7 @@ public class StatesTeleOp extends OpMode {
             armPosLeft = intake.getLeftStackCycle();
             armPosRight = intake.getRightStackCycle();
             clawPos = intake.getFlipUp();
+            buzzable = false;
         }
         if(currentGamepad1.b && !previousGamepad1.b){
             shooter.shooterOut();
@@ -264,7 +293,12 @@ public class StatesTeleOp extends OpMode {
             ClawLeftInit = false;
             ClawRightInit = false;
             intakeFlipInit = false;
-            buzzable = true;
+            intake.openWideClawL();
+            intake.openWideClawR();
+            clawDown = true;
+        }
+        if(currentGamepad1.x && !previousGamepad1.x){
+            disableAutoGrab = !disableAutoGrab;
         }
         if (currentGamepad2.dpad_up && !previousGamepad2.dpad_up){
             slides.resetLiftEncoder();
@@ -321,14 +355,38 @@ public class StatesTeleOp extends OpMode {
         }
 
         if (buzzable && ClawLeftInit && ClawRightInit){
+            startDelay = true;
+            extraTime.reset();
             gamepad2.rumble(1000);
             buzzable = false;
         }
 
-        if (buzzable && armTimer.seconds() > 0.4){
-            intake.openWideClawL();
-            intake.openWideClawR();
-            buzzable = false;
+        if (startDelay && extraTime.seconds() > 0.2){
+            intakeFlipInit = true;
+            armPosLeft = intake.getLeftStackCycle();
+            armPosRight = intake.getRightStackCycle();
+            clawPos = intake.getFlipUp();
+            startDelay = false;
+            ClawLeftInit = true;
+            ClawRightInit = true;
+        }
+
+        if (buzzable){
+            if (leftClawDist.getDistance(DistanceUnit.CM) < 2 && !disableAutoGrab){
+                intake.closeClawLeft();
+                ClawLeftInit = true;
+            }
+            if (rightClawDist.getDistance(DistanceUnit.CM) < 2 && !disableAutoGrab){
+                intake.closeClawRight();
+                ClawRightInit = true;
+            }
+        }
+
+        if (clawDown && armTimer.seconds() > 0.2){
+//            intake.openWideClawL();
+//            intake.openWideClawR();
+            clawDown = false;
+            buzzable = true;
         }
 
         if (buzzableDrop && !ClawLeftInit && !ClawRightInit){
@@ -366,7 +424,7 @@ public class StatesTeleOp extends OpMode {
             if (slideTimer.seconds() > 0.4){
                 clawPos = intake.getFlipUp();
                 slides.moveSlides(-1);
-                if (slides.ExtensionLeft.getCurrent(CurrentUnit.AMPS) > 3.5 && slideTimer.seconds() > 1.5){
+                if (slides.ExtensionLeft.getCurrent(CurrentUnit.AMPS) > 4){
                     slides.moveSlides(0);
                     moveDown = false;
                 }
@@ -448,6 +506,17 @@ public class StatesTeleOp extends OpMode {
 //            }
 //        }
 
+        List<Action> newActions = new ArrayList<>();
+        for (Action action: runningActions){
+            action.preview(packet.fieldOverlay());
+            if (action.run(packet)){
+                newActions.add(action);
+            }
+        }
+        runningActions = newActions;
+
+        dash.sendTelemetryPacket(packet);
+
 
         frontLeftMotor.setPower((setY + setX + rx)*chassis_multi);
         backLeftMotor.setPower((setY - setX + rx)*chassis_multi*backMulti);
@@ -455,10 +524,11 @@ public class StatesTeleOp extends OpMode {
         backRightMotor.setPower((setY + setX - rx)*chassis_multi*backMulti);
 
         telemetry.addData("Heading", Math.toDegrees(botHeading));
-        telemetry.addData("FrontLeft", (setY + setX + rx));
-        telemetry.addData("BackLeft", (setY - setX + rx));
-        telemetry.addData("FrontRight", (setY - setX - rx));
-        telemetry.addData("BackRight", (setY + setX - rx));
+        telemetry.addData("FrontLeft", frontLeftMotor.getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("BackLeft", backLeftMotor.getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("FrontRight", frontRightMotor.getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("BackRight", backRightMotor.getCurrent(CurrentUnit.AMPS));
+        telemetry.addData("Total current", frontLeftMotor.getCurrent(CurrentUnit.AMPS) + backLeftMotor.getCurrent(CurrentUnit.AMPS) + frontRightMotor.getCurrent(CurrentUnit.AMPS) + backRightMotor.getCurrent(CurrentUnit.AMPS) + slides.ExtensionLeft.getCurrent(CurrentUnit.AMPS) + slides.ExtensionRight.getCurrent(CurrentUnit.AMPS) + hanger.hangerMotorRight.getCurrent(CurrentUnit.AMPS) + hanger.hangerMotorLeft.getCurrent(CurrentUnit.AMPS));
         telemetry.addData("rotX", rotX);
         telemetry.addData("rotY", rotY);
 
