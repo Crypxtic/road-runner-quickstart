@@ -28,11 +28,11 @@ public class IntakeStates {
     public static double CLAW_WIDE_OPEN_R = 0.77;
 
     public static double FLIP_DOWN = 0.528;
-    public static double FLIP_UP = 0.5625;
+    public static double FLIP_UP = 0.7;
 
-    public static double FLIP_FACE_UP = 0.4975;
+    public static double FLIP_FACE_UP = 0.3;
 
-    public static double FLIP_FACE_UP_SINGLE = 0.502;
+    public static double FLIP_FACE_UP_SINGLE = 0.3;
 
     public static double FLIP_STACK = 0.526;//358
 

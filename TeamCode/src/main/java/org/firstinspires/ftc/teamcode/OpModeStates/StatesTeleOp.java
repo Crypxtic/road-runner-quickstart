@@ -404,6 +404,7 @@ public class StatesTeleOp extends OpMode {
             double power = -gamepad2.right_stick_y;
             if (slides.ExtensionLeft.getCurrentPosition() > 2100 && power > 0)
                 power = 0;
+            telemetry.addData("Slides power", power);
             slides.moveSlides(power);
         }
             hanger.hangerMotorLeft.setPower(-gamepad2.left_stick_y);
